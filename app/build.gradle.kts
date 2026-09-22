@@ -245,6 +245,10 @@ dependencies {
     // Preferences
     implementation(libs.androidx.preference)
 
+    // ML Kit & Translation
+    implementation(sylibs.mlkit.translate)
+    implementation(sylibs.onnxruntime)
+
     // Dependency injection
     implementation(libs.injekt)
 

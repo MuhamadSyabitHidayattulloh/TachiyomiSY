@@ -17,5 +17,9 @@ class SYPreferenceModule(val application: Application) : InjektModule {
         addSingletonFactory {
             ExhPreferences(get())
         }
+
+        addSingletonFactory {
+            eu.kanade.domain.translation.service.TranslationPreferences(get())
+        }
     }
 }

@@ -23,8 +23,36 @@
     <string name="pref_category_eh">E-Hentai</string>
     <string name="pref_category_fork">Fork Settings</string>
     <string name="pref_category_mangadex">MangaDex</string>
+    <string name="pref_category_translations">Translations</string>
     <string name="pref_ehentai_summary">E/ExHentai login, gallery sync</string>
     <string name="pref_mangadex_summary">MangaDex login, follows sync</string>
+    <string name="pref_translations_summary">Text detection, OCR, translation engine &amp; fonts</string>
+    <string name="pref_translation_reader_font">Reader Font</string>
+    <string name="pref_translation_reader_font_summary">Font used to render translated comic text</string>
+    <string name="pref_translation_from">Translate From</string>
+    <string name="pref_translation_to">Translate To</string>
+    <string name="pref_translation_engine">Translator Engine</string>
+    <string name="pref_translation_gemini_api_key">Gemini API Key</string>
+    <string name="pref_translation_gemini_model">Gemini Model</string>
+    <string name="pref_translation_openrouter_api_key">OpenRouter API Key</string>
+    <string name="pref_translation_openrouter_model">OpenRouter Model</string>
+    <string name="pref_translation_auto_on_download">Auto-translate after download</string>
+    <string name="pref_translation_auto_on_download_summary">Automatically queue chapters for translation after downloading</string>
+    <string name="action_translate">Translate</string>
+    <string name="action_retranslate">Translate again</string>
+    <string name="action_delete_translation">Delete translation</string>
+    <string name="translation_status_queued">Queued</string>
+    <string name="translation_status_progress">Translating…</string>
+    <string name="translation_status_done">Completed</string>
+    <string name="translation_status_failed">Failed</string>
+    <string name="translation_stage_detection">Text Detection</string>
+    <string name="translation_stage_ocr">OCR Recognition</string>
+    <string name="translation_stage_cleaning">Cleaning / Inpainting</string>
+    <string name="translation_stage_translation">Translating Text</string>
+    <string name="translation_stage_canvas">Canvas Redraw</string>
+    <string name="translation_original">Original</string>
+    <string name="translation_translated">Translated</string>
+    <string name="translation_not_available">Translation not available</string>
 
     <!-- About -->
     <string name="changelog_version">Version %1$s</string>

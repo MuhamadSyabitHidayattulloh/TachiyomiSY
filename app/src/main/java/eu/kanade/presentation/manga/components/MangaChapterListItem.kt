@@ -62,9 +62,11 @@ fun MangaChapterListItem(
     downloadProgressProvider: () -> Int,
     chapterSwipeStartAction: LibraryPreferences.ChapterSwipeAction,
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
+    translationProgressProvider: (() -> eu.kanade.tachiyomi.data.translation.model.TranslationProgress)? = null,
     onLongClick: () -> Unit,
     onClick: () -> Unit,
     onDownloadClick: ((ChapterDownloadAction) -> Unit)?,
+    onTranslationClick: ((ChapterTranslationAction) -> Unit)? = null,
     onChapterSwipe: (LibraryPreferences.ChapterSwipeAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -187,6 +189,15 @@ fun MangaChapterListItem(
                         }
                     }
                 }
+            }
+
+            if (downloadStateProvider() == Download.State.DOWNLOADED && translationProgressProvider != null) {
+                ChapterTranslationIndicator(
+                    enabled = downloadIndicatorEnabled,
+                    modifier = Modifier.padding(start = 4.dp),
+                    progress = translationProgressProvider(),
+                    onClick = { onTranslationClick?.invoke(it) },
+                )
             }
 
             ChapterDownloadIndicator(
