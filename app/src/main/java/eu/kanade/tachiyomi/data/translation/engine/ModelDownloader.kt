@@ -14,19 +14,19 @@ import java.io.FileOutputStream
 
 enum class ModelType(val fileName: String, val url: String, val displayName: String) {
     DETECTION(
-        "comic_text_detector.onnx",
-        "https://huggingface.co/Ogami/ComicTextDetector/resolve/main/comictextdetector.onnx",
-        "Comic Text Detector (ONNX)",
+        "detector-v4-s_int8.onnx",
+        "https://huggingface.co/ogkalu/comic-text-and-bubble-detector/resolve/main/detector-v4-s_int8.onnx",
+        "Comic Text & Bubble Detector (ONNX)",
     ),
     OCR(
-        "paddle_ocr_v6.onnx",
-        "https://huggingface.co/monraker/PaddleOCR-v4/resolve/main/ch_PP-OCRv4_rec_infer.onnx",
+        "PP-OCRv6_small_rec.onnx",
+        "https://huggingface.co/ogkalu/ppocr-v6-onnx/resolve/main/PP-OCRv6_small_rec.onnx",
         "PaddleOCR v6 Small (ONNX)",
     ),
     INPAINTING(
-        "lama_inpainting.onnx",
-        "https://huggingface.co/Carve/LaMa-ONNX/resolve/main/lama_fp32.onnx",
-        "LaMa / Aot Inpainting (ONNX)",
+        "aot.onnx",
+        "https://huggingface.co/ogkalu/aot-inpainting/resolve/main/aot.onnx",
+        "Aot Inpainting (ONNX)",
     ),
 }
 
