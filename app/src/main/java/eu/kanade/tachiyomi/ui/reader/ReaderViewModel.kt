@@ -473,6 +473,7 @@ class ReaderViewModel @JvmOverloads constructor(
                     bookmarked = newChapters.currChapter.chapter.bookmark,
                 )
             }
+            updateTranslationAvailability()
         }
         return newChapters
     }
@@ -1023,6 +1024,33 @@ class ReaderViewModel @JvmOverloads constructor(
         mutableState.update { it.copy(dialog = Dialog.RetryAllHelp) }
     }
 
+    fun toggleTranslation() {
+        val active = readerPreferences.showTranslation.get()
+        if (!active && !state.value.isTranslationAvailable) return
+        val nextState = !active
+        readerPreferences.showTranslation.set(nextState)
+        mutableState.update { it.copy(isTranslationActive = nextState) }
+        restartCurrentChapter()
+    }
+
+    fun updateTranslationAvailability() {
+        val currChapter = currentChapter?.chapter
+        val currManga = manga
+        val hasTrans = if (currChapter != null && currManga != null) {
+            val source = sourceManager.get(currManga.source)
+            Injekt.get<eu.kanade.tachiyomi.data.translation.TranslationManager>().isTranslated(currChapter, currManga, source)
+        } else {
+            false
+        }
+        val isTransActive = readerPreferences.showTranslation.get() && hasTrans
+        mutableState.update {
+            it.copy(
+                isTranslationAvailable = hasTrans,
+                isTranslationActive = isTransActive,
+            )
+        }
+    }
+
     fun toggleAutoScroll(enabled: Boolean) {
         mutableState.update { it.copy(autoScroll = enabled) }
     }
@@ -1369,6 +1397,8 @@ class ReaderViewModel @JvmOverloads constructor(
         val autoScroll: Boolean = false,
         val isAutoScrollEnabled: Boolean = false,
         val ehAutoscrollFreq: String = "",
+        val isTranslationAvailable: Boolean = false,
+        val isTranslationActive: Boolean = false,
         // SY <--
     ) {
         val currentChapter: ReaderChapter?

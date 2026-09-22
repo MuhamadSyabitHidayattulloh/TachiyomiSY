@@ -95,6 +95,9 @@ fun ReaderAppBars(
     onClickChapterList: () -> Unit,
     onClickPageLayout: () -> Unit,
     onClickShiftPage: () -> Unit,
+    isTranslationAvailable: Boolean = false,
+    isTranslationActive: Boolean = false,
+    onClickTranslation: (() -> Unit)? = null,
     // SY <--
 ) {
     val backgroundColor = MaterialTheme.colorScheme
@@ -234,6 +237,9 @@ fun ReaderAppBars(
                     onClickShare = onShare,
                     onClickPageLayout = onClickPageLayout,
                     onClickShiftPage = onClickShiftPage,
+                    isTranslationAvailable = isTranslationAvailable,
+                    isTranslationActive = isTranslationActive,
+                    onClickTranslation = onClickTranslation,
                     // SY <--
                 )
             }

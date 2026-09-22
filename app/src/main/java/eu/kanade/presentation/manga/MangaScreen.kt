@@ -51,6 +51,7 @@ import androidx.compose.ui.util.fastMap
 import eu.kanade.presentation.components.relativeDateText
 import eu.kanade.presentation.manga.components.ChapterDownloadAction
 import eu.kanade.presentation.manga.components.ChapterHeader
+import eu.kanade.presentation.manga.components.ChapterTranslationAction
 import eu.kanade.presentation.manga.components.ExpandableMangaDescription
 import eu.kanade.presentation.manga.components.MangaActionRow
 import eu.kanade.presentation.manga.components.MangaBottomActionMenu
@@ -120,6 +121,8 @@ fun MangaScreen(
     navigateUp: () -> Unit,
     onChapterClicked: (Chapter) -> Unit,
     onDownloadChapter: ((List<ChapterList.Item>, ChapterDownloadAction) -> Unit)?,
+    onTranslationClick: ((ChapterList.Item, ChapterTranslationAction) -> Unit)? = null,
+    translationProgressProvider: ((Chapter) -> eu.kanade.tachiyomi.data.translation.model.TranslationProgress)? = null,
     onAddToLibraryClicked: () -> Unit,
     onWebViewClicked: (() -> Unit)?,
     onWebViewLongClicked: (() -> Unit)?,
@@ -585,6 +588,8 @@ private fun MangaScreenSmallImpl(
                         // SY <--
                         onChapterClicked = onChapterClicked,
                         onDownloadChapter = onDownloadChapter,
+                        onTranslationClick = onTranslationClick,
+                        translationProgressProvider = translationProgressProvider,
                         onChapterSelected = onChapterSelected,
                         onChapterSwipe = onChapterSwipe,
                     )
@@ -882,6 +887,8 @@ fun MangaScreenLargeImpl(
                                 // SY <--
                                 onChapterClicked = onChapterClicked,
                                 onDownloadChapter = onDownloadChapter,
+                                onTranslationClick = onTranslationClick,
+                                translationProgressProvider = translationProgressProvider,
                                 onChapterSelected = onChapterSelected,
                                 onChapterSwipe = onChapterSwipe,
                             )
@@ -947,6 +954,8 @@ private fun LazyListScope.sharedChapterItems(
     // SY <--
     onChapterClicked: (Chapter) -> Unit,
     onDownloadChapter: ((List<ChapterList.Item>, ChapterDownloadAction) -> Unit)?,
+    onTranslationClick: ((ChapterList.Item, ChapterTranslationAction) -> Unit)? = null,
+    translationProgressProvider: ((Chapter) -> eu.kanade.tachiyomi.data.translation.model.TranslationProgress)? = null,
     onChapterSelected: (ChapterList.Item, Boolean, Boolean) -> Unit,
     onChapterSwipe: (ChapterList.Item, LibraryPreferences.ChapterSwipeAction) -> Unit,
 ) {
@@ -1013,6 +1022,16 @@ private fun LazyListScope.sharedChapterItems(
                     downloadProgressProvider = { item.downloadProgress },
                     chapterSwipeStartAction = chapterSwipeStartAction,
                     chapterSwipeEndAction = chapterSwipeEndAction,
+                    translationProgressProvider = if (translationProgressProvider != null) {
+                        { translationProgressProvider(item.chapter) }
+                    } else {
+                        null
+                    },
+                    onTranslationClick = if (onTranslationClick != null) {
+                        { onTranslationClick(item, it) }
+                    } else {
+                        null
+                    },
                     onLongClick = {
                         onChapterSelected(item, !item.selected, true)
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)

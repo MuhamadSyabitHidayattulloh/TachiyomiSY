@@ -35,12 +35,16 @@ import eu.kanade.domain.track.service.TrackPreferences
 import eu.kanade.domain.ui.UiPreferences
 import eu.kanade.presentation.manga.DownloadAction
 import eu.kanade.presentation.manga.components.ChapterDownloadAction
+import eu.kanade.presentation.manga.components.ChapterTranslationAction
 import eu.kanade.presentation.util.formattedMessage
 import eu.kanade.tachiyomi.data.download.DownloadCache
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.TrackerManager
+import eu.kanade.tachiyomi.data.translation.TranslationManager
+import eu.kanade.tachiyomi.data.translation.model.TranslationProgress
+import eu.kanade.tachiyomi.data.translation.model.TranslationState
 import eu.kanade.tachiyomi.source.PagePreviewSource
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.getNameForMangaInfo
@@ -149,6 +153,7 @@ class MangaScreenModel(
     private val trackerManager: TrackerManager = Injekt.get(),
     private val trackChapter: TrackChapter = Injekt.get(),
     private val downloadManager: DownloadManager = Injekt.get(),
+    private val translationManager: TranslationManager = Injekt.get(),
     private val downloadCache: DownloadCache = Injekt.get(),
     private val getMangaAndChapters: GetMangaWithChapters = Injekt.get(),
     // SY -->
@@ -1178,6 +1183,47 @@ class MangaScreenModel(
                     toggleFavorite()
                 }
             }
+        }
+    }
+
+    fun runChapterTranslationActions(
+        item: ChapterList.Item,
+        action: ChapterTranslationAction,
+    ) {
+        when (action) {
+            ChapterTranslationAction.START -> translateChapters(listOf(item))
+            ChapterTranslationAction.CANCEL -> cancelTranslation(item.chapter.id)
+            ChapterTranslationAction.DELETE -> deleteTranslation(listOf(item))
+        }
+    }
+
+    fun translateChapters(items: List<ChapterList.Item>) {
+        val state = successState ?: return
+        items.forEach { item ->
+            translationManager.queueTranslation(state.manga, item.chapter)
+        }
+    }
+
+    fun cancelTranslation(chapterId: Long) {
+        translationManager.cancelTranslation(chapterId)
+    }
+
+    fun deleteTranslation(items: List<ChapterList.Item>) {
+        val state = successState ?: return
+        val source = state.source
+        items.forEach { item ->
+            translationManager.deleteTranslation(state.manga, item.chapter, source)
+        }
+    }
+
+    fun getTranslationProgress(chapter: Chapter): TranslationProgress {
+        val state = successState ?: return TranslationProgress()
+        val isTrans = translationManager.isTranslated(chapter, state.manga, state.source)
+        val active = translationManager.getStatus(chapter.id)
+        return if (isTrans && active.state == TranslationState.NOT_TRANSLATED) {
+            TranslationProgress(state = TranslationState.COMPLETED)
+        } else {
+            active
         }
     }
 

@@ -688,6 +688,9 @@ class ReaderActivity : BaseActivity() {
                 }
             },
             onClickShiftPage = ::shiftDoublePages,
+            isTranslationAvailable = state.isTranslationAvailable,
+            isTranslationActive = state.isTranslationActive,
+            onClickTranslation = viewModel::toggleTranslation,
             // SY <--
         )
     }

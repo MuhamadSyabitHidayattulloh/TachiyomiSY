@@ -180,6 +180,8 @@ class AppModule(val app: Application) : InjektModule {
         addSingletonFactory { PagePreviewCache(app) }
 
         addSingletonFactory { GoogleDriveService(app) }
+
+        addSingletonFactory { eu.kanade.tachiyomi.data.translation.TranslationManager(app) }
         // SY <--
     }
 }

@@ -221,6 +221,8 @@ class ReaderPreferences(
 
     val readerBottomButtons: Preference<Set<String>> = preferenceStore.getStringSet("reader_bottom_buttons", ReaderBottomButton.BUTTONS_DEFAULTS)
 
+    val showTranslation: Preference<Boolean> = preferenceStore.getBoolean("pref_reader_show_translation", false)
+
     val pageLayout: Preference<Int> = preferenceStore.getInt("page_layout", PagerConfig.PageLayout.AUTOMATIC)
 
     val invertDoublePages: Preference<Boolean> = preferenceStore.getBoolean("invert_double_pages", false)

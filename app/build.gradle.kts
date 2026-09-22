@@ -245,6 +245,13 @@ dependencies {
     // Preferences
     implementation(libs.androidx.preference)
 
+    // ML Kit & Translation
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation("com.google.mlkit:text-recognition-japanese:16.0.1")
+    implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
+    implementation("com.google.mlkit:translate:17.0.3")
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.18.0")
+
     // Dependency injection
     implementation(libs.injekt)
 
