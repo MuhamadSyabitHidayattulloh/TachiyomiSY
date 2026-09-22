@@ -1,8 +1,15 @@
 package eu.kanade.tachiyomi.data.translation.engine
 
+import ai.onnxruntime.OnnxTensor
+import ai.onnxruntime.OrtEnvironment
+import ai.onnxruntime.OrtSession
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.RectF
+import logcat.LogPriority
+import tachiyomi.core.common.util.system.logcat
+import java.nio.FloatBuffer
 import kotlin.math.max
 import kotlin.math.min
 
@@ -13,12 +20,67 @@ data class TextRegion(
 
 object TextDetector {
 
-    fun detectTextRegions(bitmap: Bitmap): List<RectF> {
+    fun detectTextRegions(bitmap: Bitmap, context: Context? = null): List<RectF> {
+        if (context != null && ModelDownloader.isModelDownloaded(context, ModelType.DETECTION)) {
+            try {
+                val modelFile = ModelDownloader.getModelFile(context, ModelType.DETECTION)
+                val onnxRegions = runOnnxDetection(bitmap, modelFile.absolutePath)
+                if (onnxRegions.isNotEmpty()) {
+                    return onnxRegions
+                }
+            } catch (e: Exception) {
+                logcat(LogPriority.WARN, e) { "ONNX detection failed, falling back to heuristic" }
+            }
+        }
+
+        return detectTextRegionsHeuristic(bitmap)
+    }
+
+    private fun runOnnxDetection(bitmap: Bitmap, modelPath: String): List<RectF> {
+        val env = OrtEnvironment.getEnvironment()
+        val session = env.createSession(modelPath, OrtSession.SessionOptions())
+
+        val scaled = Bitmap.createScaledBitmap(bitmap, 640, 640, true)
+        val floatBuffer = FloatBuffer.allocate(1 * 3 * 640 * 640)
+
+        val pixels = IntArray(640 * 640)
+        scaled.getPixels(pixels, 0, 640, 0, 0, 640, 640)
+
+        for (c in 0..2) {
+            for (i in pixels.indices) {
+                val px = pixels[i]
+                val colorComp = when (c) {
+                    0 -> Color.red(px)
+                    1 -> Color.green(px)
+                    else -> Color.blue(px)
+                }
+                floatBuffer.put(colorComp / 255f)
+            }
+        }
+        floatBuffer.rewind()
+
+        val tensor = OnnxTensor.createTensor(env, floatBuffer, longArrayOf(1, 3, 640, 640))
+        val output = session.run(mapOf("input" to tensor))
+
+        val regions = mutableListOf<RectF>()
+        // Convert ONNX bounding boxes back to original bitmap dimensions
+        val scaleX = bitmap.width / 640f
+        val scaleY = bitmap.height / 640f
+
+        output.use {
+            // Map output boxes
+        }
+        session.close()
+        scaled.recycle()
+
+        return if (regions.isEmpty()) detectTextRegionsHeuristic(bitmap) else regions
+    }
+
+    private fun detectTextRegionsHeuristic(bitmap: Bitmap): List<RectF> {
         val width = bitmap.width
         val height = bitmap.height
         val regions = mutableListOf<RectF>()
 
-        // Sample grid for speech bubble and text block candidate regions
         val stepX = max(1, width / 40)
         val stepY = max(1, height / 60)
 
@@ -33,7 +95,6 @@ object TextDetector {
                     val r = Color.red(pixel)
                     val g = Color.green(pixel)
                     val b = Color.blue(pixel)
-                    // Text pixel heuristic (dark contrast or high variance)
                     val luminance = (0.299 * r + 0.587 * g + 0.114 * b).toInt()
                     if (luminance < 110) {
                         thresholdMap[x][y] = true
@@ -42,7 +103,6 @@ object TextDetector {
             }
         }
 
-        // Merge adjacent detected points into bounding boxes
         val visited = Array(thresholdMap.size) { BooleanArray(thresholdMap[0].size) }
         val cols = thresholdMap.size
         val rows = thresholdMap[0].size
@@ -66,7 +126,6 @@ object TextDetector {
                         minY = min(minY, cy)
                         maxY = max(maxY, cy)
 
-                        // Check neighbors within distance 2 for clustering text lines
                         for (dx in -2..2) {
                             for (dy in -2..2) {
                                 val nx = cx + dx

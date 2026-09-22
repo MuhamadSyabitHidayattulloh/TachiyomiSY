@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.data.translation.engine
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -10,7 +11,11 @@ import kotlin.math.min
 
 object Inpainter {
 
-    fun inpaint(original: Bitmap, textRegions: List<TextRegion>): Bitmap {
+    fun inpaint(
+        original: Bitmap,
+        textRegions: List<TextRegion>,
+        context: Context? = null,
+    ): Bitmap {
         val result = original.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(result)
         val paint = Paint().apply {
@@ -23,7 +28,6 @@ object Inpainter {
             val sampleBgColor = sampleBorderColor(original, rect)
             paint.color = sampleBgColor
 
-            // Expand rect slightly to cover text edges completely
             val expandedRect = RectF(
                 max(0f, rect.left - 4f),
                 max(0f, rect.top - 4f),
@@ -31,7 +35,6 @@ object Inpainter {
                 min(original.height.toFloat(), rect.bottom + 4f),
             )
 
-            // Fill text area with sampled background color (inpainting/cleaning speech bubble)
             canvas.drawRoundRect(expandedRect, 8f, 8f, paint)
         }
 
@@ -49,7 +52,6 @@ object Inpainter {
         val top = rect.top.toInt().coerceIn(0, bitmap.height - 1)
         val bottom = rect.bottom.toInt().coerceIn(0, bitmap.height - 1)
 
-        // Sample top and bottom borders
         for (x in left..right step max(1, (right - left) / 10)) {
             val p1 = bitmap.getPixel(x, top)
             val p2 = bitmap.getPixel(x, bottom)
@@ -59,7 +61,6 @@ object Inpainter {
             count += 2
         }
 
-        // Sample left and right borders
         for (y in top..bottom step max(1, (bottom - top) / 10)) {
             val p1 = bitmap.getPixel(left, y)
             val p2 = bitmap.getPixel(right, y)
@@ -74,7 +75,6 @@ object Inpainter {
             val avgG = (gSum / count).toInt().coerceIn(0, 255)
             val avgB = (bSum / count).toInt().coerceIn(0, 255)
 
-            // If border is predominantly light, default to pure white for crisp comic speech bubbles
             val luminance = 0.299 * avgR + 0.587 * avgG + 0.114 * avgB
             if (luminance > 180) {
                 Color.WHITE

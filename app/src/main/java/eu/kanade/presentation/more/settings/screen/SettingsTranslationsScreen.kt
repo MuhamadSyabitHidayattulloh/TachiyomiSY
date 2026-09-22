@@ -2,9 +2,19 @@ package eu.kanade.presentation.more.settings.screen
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import eu.kanade.domain.translation.service.TranslationPreferences
 import eu.kanade.presentation.more.settings.Preference
+import eu.kanade.tachiyomi.data.translation.engine.ModelDownloader
+import eu.kanade.tachiyomi.data.translation.engine.ModelType
+import eu.kanade.tachiyomi.util.system.toast
+import kotlinx.coroutines.launch
 import tachiyomi.i18n.MR
 import tachiyomi.i18n.sy.SYMR
 import tachiyomi.presentation.core.i18n.stringResource
@@ -32,6 +42,14 @@ object SettingsTranslationsScreen : SearchableSettings {
                 ),
             ),
             Preference.PreferenceGroup(
+                "ONNX Models (HuggingFace)",
+                preferenceItems = listOf(
+                    modelDownloadPreference(ModelType.DETECTION),
+                    modelDownloadPreference(ModelType.OCR),
+                    modelDownloadPreference(ModelType.INPAINTING),
+                ),
+            ),
+            Preference.PreferenceGroup(
                 "API & AI Models",
                 preferenceItems = listOf(
                     geminiApiKey(translationPreferences),
@@ -46,6 +64,48 @@ object SettingsTranslationsScreen : SearchableSettings {
                     autoTranslateOnDownload(translationPreferences),
                 ),
             ),
+        )
+    }
+
+    @Composable
+    private fun modelDownloadPreference(modelType: ModelType): Preference.PreferenceItem.TextPreference {
+        val context = LocalContext.current
+        val scope = rememberCoroutineScope()
+        var isDownloaded by remember { mutableStateOf(ModelDownloader.isModelDownloaded(context, modelType)) }
+        var isDownloading by remember { mutableStateOf(false) }
+        var progress by remember { mutableFloatStateOf(0f) }
+
+        val subtitle = when {
+            isDownloading -> "Downloading... ${(progress * 100).toInt()}%"
+            isDownloaded -> "Downloaded (Tap to delete)"
+            else -> "Not downloaded (Tap to download from HuggingFace)"
+        }
+
+        return Preference.PreferenceItem.TextPreference(
+            title = modelType.displayName,
+            subtitle = subtitle,
+            onClick = {
+                if (isDownloading) return@TextPreference
+                if (isDownloaded) {
+                    ModelDownloader.deleteModel(context, modelType)
+                    isDownloaded = false
+                    context.toast("Model deleted")
+                } else {
+                    isDownloading = true
+                    scope.launch {
+                        val success = ModelDownloader.downloadModel(context, modelType) { p ->
+                            progress = p
+                        }
+                        isDownloading = false
+                        if (success) {
+                            isDownloaded = true
+                            context.toast("Model downloaded successfully")
+                        } else {
+                            context.toast("Failed to download model")
+                        }
+                    }
+                }
+            },
         )
     }
 

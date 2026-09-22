@@ -1,0 +1,109 @@
+package eu.kanade.tachiyomi.data.translation.engine
+
+import android.content.Context
+import eu.kanade.tachiyomi.network.NetworkHelper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import logcat.LogPriority
+import okhttp3.Request
+import tachiyomi.core.common.util.system.logcat
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+import java.io.File
+import java.io.FileOutputStream
+
+enum class ModelType(val fileName: String, val url: String, val displayName: String) {
+    DETECTION(
+        "comic_text_detector.onnx",
+        "https://huggingface.co/Ogami/ComicTextDetector/resolve/main/comictextdetector.onnx",
+        "Comic Text Detector (ONNX)",
+    ),
+    OCR(
+        "paddle_ocr_v6.onnx",
+        "https://huggingface.co/monraker/PaddleOCR-v4/resolve/main/ch_PP-OCRv4_rec_infer.onnx",
+        "PaddleOCR v6 Small (ONNX)",
+    ),
+    INPAINTING(
+        "lama_inpainting.onnx",
+        "https://huggingface.co/Carve/LaMa-ONNX/resolve/main/lama_fp32.onnx",
+        "LaMa / Aot Inpainting (ONNX)",
+    ),
+}
+
+object ModelDownloader {
+
+    fun getModelFile(context: Context, modelType: ModelType): File {
+        val modelsDir = File(context.filesDir, "models")
+        if (!modelsDir.exists()) {
+            modelsDir.mkdirs()
+        }
+        return File(modelsDir, modelType.fileName)
+    }
+
+    fun isModelDownloaded(context: Context, modelType: ModelType): Boolean {
+        val file = getModelFile(context, modelType)
+        return file.exists() && file.length() > 1024L
+    }
+
+    suspend fun downloadModel(
+        context: Context,
+        modelType: ModelType,
+        onProgress: (Float) -> Unit = {},
+    ): Boolean = withContext(Dispatchers.IO) {
+        val destinationFile = getModelFile(context, modelType)
+        val tempFile = File(destinationFile.parentFile, "${destinationFile.name}.tmp")
+
+        try {
+            val client = Injekt.get<NetworkHelper>().client
+            val request = Request.Builder().url(modelType.url).build()
+
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    logcat(LogPriority.ERROR) { "Failed to download model ${modelType.displayName}: HTTP ${response.code}" }
+                    return@withContext false
+                }
+
+                val body = response.body
+                val contentLength = body.contentLength()
+                val inputStream = body.byteStream()
+                val outputStream = FileOutputStream(tempFile)
+
+                val buffer = ByteArray(8192)
+                var downloadedBytes = 0L
+                var read: Int
+
+                while (inputStream.read(buffer).also { read = it } != -1) {
+                    outputStream.write(buffer, 0, read)
+                    downloadedBytes += read
+                    if (contentLength > 0) {
+                        onProgress(downloadedBytes.toFloat() / contentLength)
+                    }
+                }
+
+                outputStream.flush()
+                outputStream.close()
+                inputStream.close()
+
+                if (tempFile.exists()) {
+                    if (destinationFile.exists()) {
+                        destinationFile.delete()
+                    }
+                    tempFile.renameTo(destinationFile)
+                    logcat(LogPriority.INFO) { "Successfully downloaded model ${modelType.displayName}" }
+                    return@withContext true
+                }
+            }
+        } catch (e: Exception) {
+            logcat(LogPriority.ERROR, e) { "Error downloading model ${modelType.displayName}" }
+            if (tempFile.exists()) {
+                tempFile.delete()
+            }
+        }
+        return@withContext false
+    }
+
+    fun deleteModel(context: Context, modelType: ModelType): Boolean {
+        val file = getModelFile(context, modelType)
+        return if (file.exists()) file.delete() else false
+    }
+}

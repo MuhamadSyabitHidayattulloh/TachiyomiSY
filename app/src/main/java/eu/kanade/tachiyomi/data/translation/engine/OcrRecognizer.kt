@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.data.translation.engine
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.RectF
 import com.google.mlkit.vision.common.InputImage
@@ -16,6 +17,7 @@ object OcrRecognizer {
         bitmap: Bitmap,
         regions: List<RectF>,
         sourceLang: String = "ja",
+        context: Context? = null,
     ): List<TextRegion> {
         val results = mutableListOf<TextRegion>()
 
@@ -59,7 +61,6 @@ object OcrRecognizer {
             } catch (_: Throwable) {}
         }
 
-        // If no regions yielded text or recognizer was unavailable, attempt full image recognition
         if (results.isEmpty() && recognizer != null) {
             try {
                 val inputImage = InputImage.fromBitmap(bitmap, 0)

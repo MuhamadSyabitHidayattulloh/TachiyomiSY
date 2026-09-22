@@ -228,7 +228,7 @@ class TranslationManager(
                     )
                 }
                 logs.add("Page $pageNum: Detecting text areas...")
-                val rawRegions = TextDetector.detectTextRegions(bitmap)
+                val rawRegions = TextDetector.detectTextRegions(bitmap, context)
                 logs.add("Page $pageNum: Found ${rawRegions.size} candidate text region(s)")
 
                 // Stage 2: OCR
@@ -242,7 +242,7 @@ class TranslationManager(
                     )
                 }
                 logs.add("Page $pageNum: Performing OCR ($fromLang)...")
-                val textRegions = OcrRecognizer.recognizeText(bitmap, rawRegions, fromLang)
+                val textRegions = OcrRecognizer.recognizeText(bitmap, rawRegions, fromLang, context)
                 logs.add("Page $pageNum: Recognized ${textRegions.size} text block(s)")
 
                 if (textRegions.isEmpty()) {
@@ -264,7 +264,7 @@ class TranslationManager(
                     )
                 }
                 logs.add("Page $pageNum: Cleaning text background...")
-                val cleanedBitmap = Inpainter.inpaint(bitmap, textRegions)
+                val cleanedBitmap = Inpainter.inpaint(bitmap, textRegions, context)
 
                 // Stage 4: Translation
                 updateStatus(chapterId) {

@@ -39,6 +39,7 @@ class TranslationPreferences(
             "en" to "English",
             "zh" to "Chinese",
             "ja" to "Japanese",
+            "ko" to "Korean",
         )
 
         val TARGET_LANGUAGES = mapOf(
