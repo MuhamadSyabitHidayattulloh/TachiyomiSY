@@ -1024,17 +1024,30 @@ class ReaderViewModel @JvmOverloads constructor(
         mutableState.update { it.copy(dialog = Dialog.RetryAllHelp) }
     }
 
+    fun reloadCurrentChapter() {
+        val chapter = state.value.currentChapter ?: return
+        val loader = loader ?: return
+        viewModelScope.launchIO {
+            try {
+                loadChapter(loader, chapter, state.value.currentPage)
+            } catch (e: Throwable) {
+                if (e is CancellationException) throw e
+                logcat(LogPriority.ERROR, e)
+            }
+        }
+    }
+
     fun toggleTranslation() {
         val active = readerPreferences.showTranslation.get()
         if (!active && !state.value.isTranslationAvailable) return
         val nextState = !active
         readerPreferences.showTranslation.set(nextState)
         mutableState.update { it.copy(isTranslationActive = nextState) }
-        restartCurrentChapter()
+        reloadCurrentChapter()
     }
 
     fun updateTranslationAvailability() {
-        val currChapter = currentChapter?.chapter
+        val currChapter = state.value.currentChapter?.chapter?.toDomainChapter()
         val currManga = manga
         val hasTrans = if (currChapter != null && currManga != null) {
             val source = sourceManager.get(currManga.source)

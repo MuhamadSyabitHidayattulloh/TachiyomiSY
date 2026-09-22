@@ -6,7 +6,7 @@ object TranslationStorage {
 
     fun getTranslationDir(chapterDir: UniFile, createIfMissing: Boolean = false): UniFile? {
         return if (chapterDir.isFile) {
-            val parent = chapterDir.parent ?: return null
+            val parent = chapterDir.parentFile ?: return null
             val baseName = chapterDir.name?.substringBeforeLast(".") ?: "chapter"
             if (createIfMissing) {
                 val translationsFolder = parent.createDirectory("translations") ?: parent
